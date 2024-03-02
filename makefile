@@ -1,8 +1,8 @@
 CXX = g++
 CXXFLAGS = -std=c++20
 
-# List of source files
-SRCS = main.cpp TileManager.cpp Tile.cpp PGMImageProcessor.cpp
+# List of source files (automatically detected)
+SRCS = $(wildcard *.cpp)
 
 # List of object files
 OBJS = $(SRCS:.cpp=.o)
@@ -21,3 +21,7 @@ $(TARGET): $(OBJS)
 # Clean up object files and the target executable
 clean:
 	rm -f $(OBJS) $(TARGET)
+
+# Run the main program
+run: $(TARGET)
+	./$(TARGET)
