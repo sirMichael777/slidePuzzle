@@ -1,11 +1,11 @@
 CXX = g++
 CXXFLAGS = -std=c++20
 
-# List of source files (automatically detected)
-SRCS = $(wildcard *.cpp)
+# Automatically detect source files
+SRCS := $(wildcard *.cpp)
 
-# List of object files
-OBJS = $(SRCS:.cpp=.o)
+# Generate object file names from source files
+OBJS := $(SRCS:.cpp=.o)
 
 # Target executable
 TARGET = main
@@ -24,4 +24,6 @@ clean:
 
 # Run the main program
 run: $(TARGET)
-	./$(TARGET)
+	./$(TARGET) $(ARGS)
+
+.PHONY: clean run
