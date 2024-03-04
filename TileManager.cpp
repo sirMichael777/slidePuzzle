@@ -1,140 +1,118 @@
+// TileManager.cpp
 #include "TileManager.h"
 #include "PGMImageProcessor.h"
-
-#include <iostream>
 #include <fstream>
-#include <algorithm>
+#include <iostream>
 #include <random>
 #include <chrono>
+#include <vector>
 
-namespace MSKMIC017
-{
-    // Constructor
-    TileManager::TileManager(int size, int imageWidth, int imageHeight) : gridSize(size), emptyTileX(size - 1), emptyTileY(size - 1)
-    {
-        tileWidth = imageWidth / size;
-        tileHeight = imageHeight / size;
-        board.resize(size, std::vector<Tile>(size, Tile(tileWidth, tileHeight)));
+namespace MSKMIC017 {
+
+// Constructor implementation
+TileManager::TileManager(int size) : gridSize(size), tileWidth(0), tileHeight(0), emptyTileX(size - 1), emptyTileY(size - 1) {
+    // The actual size of tiles will be determined once the image is loaded.
+}
+
+// Destructor implementation
+TileManager::~TileManager() {
+    // If dynamic memory was used, it should be released here.
+    // No dynamic memory allocation in this implementation, so empty destructor.
+}
+
+// Load PGM image and initialize tiles
+bool TileManager::loadPGMImage(const std::string &filename) {
+    std::vector<unsigned char> imageData;
+    int width, height;
+
+    if (!PGMImageProcessor::readPGM(filename, imageData, width, height)) {
+        std::cerr << "Error reading PGM file." << std::endl;
+        return false;
     }
 
-    // Destructor
-    TileManager::~TileManager()
-    {
-        // If you have dynamically allocated memory within Tiles, manage it here.
-        // Given the current design, explicit memory management might not be required.
-    }
+    tileWidth = width / gridSize;
+    tileHeight = height / gridSize;
+    int tileArea = tileWidth * tileHeight;
 
-    void TileManager::loadPGMImage(const std::string &filename)
-    {
-        std::vector<unsigned char> imageData;
-        int imageWidth, imageHeight;
-        if (!PGMImageProcessor::readPGM(filename, imageData, imageWidth, imageHeight))
-        {
-            std::cerr << "Failed to load image: " << filename << std::endl;
-            return;
-        }
-
-        for (int row = 0; row < gridSize; ++row)
-        {
-            for (int col = 0; col < gridSize; ++col)
-            {
-                Tile &tile = board[row][col];
-                for (int y = 0; y < tileHeight; ++y)
-                {
-                    for (int x = 0; x < tileWidth; ++x)
-                    {
-                        int srcIndex = ((row * tileHeight + y) * imageWidth) + (col * tileWidth + x);
-                        int destIndex = y * tileWidth + x;
-                        if (srcIndex < imageData.size())
-                        {
-                            tile.pixelData[destIndex] = imageData[srcIndex];
-                        }
-                    }
+    board.clear();
+    board.reserve(gridSize);
+    for (int row = 0; row < gridSize; ++row) {
+        std::vector<Tile> tileRow(gridSize, Tile(tileWidth, tileHeight));
+        for (int col = 0; col < gridSize; ++col) {
+            Tile& tile = tileRow[col];
+            for (int y = 0; y < tileHeight; ++y) {
+                for (int x = 0; x < tileWidth; ++x) {
+                    int originalIndex = (row * tileHeight + y) * width + (col * tileWidth + x);
+                    int tileIndex = y * tileWidth + x;
+                    tile.pixelData[tileIndex] = imageData[originalIndex];
                 }
             }
         }
+        board.push_back(tileRow);
     }
 
-    void TileManager::shuffleTiles(int numMoves)
-    {
-        std::default_random_engine engine(std::chrono::system_clock::now().time_since_epoch().count());
-        for (int move = 0; move < numMoves; ++move)
-        {
-            std::vector<char> validMoves;
-            if (emptyTileX > 0)
-                validMoves.push_back('L'); // Can move left
-            if (emptyTileX < gridSize - 1)
-                validMoves.push_back('R'); // Can move right
-            if (emptyTileY > 0)
-                validMoves.push_back('U'); // Can move up
-            if (emptyTileY < gridSize - 1)
-                validMoves.push_back('D'); // Can move down
+    // Set the bottom right tile to black (the empty tile)
+    std::fill(board[emptyTileY][emptyTileX].pixelData.begin(), board[emptyTileY][emptyTileX].pixelData.end(), 0);
 
-            std::shuffle(validMoves.begin(), validMoves.end(), engine);
-            makeMove(validMoves.front()); // Make the first valid move
-        }
-    }
+    return true;
+}
 
-    void TileManager::writePGMImage(const std::string &filename, int moveNumber)
-    {
-        std::vector<unsigned char> compiledData(tileWidth * gridSize * tileHeight * gridSize, 255); // Initialize with white or another color for empty spaces.
+// Shuffle tiles to create a solvable puzzle state
+void TileManager::shuffleTiles(int numMoves) {
+    std::default_random_engine engine(std::chrono::system_clock::now().time_since_epoch().count());
+    for (int move = 0; move < numMoves; ++move) {
+        std::vector<std::pair<int, int>> validMoves;
 
-        for (int row = 0; row < gridSize; ++row)
-        {
-            for (int col = 0; col < gridSize; ++col)
-            {
-                Tile &tile = board[row][col];
-                for (int y = 0; y < tileHeight; ++y)
-                {
-                    for (int x = 0; x < tileWidth; ++x)
-                    {
-                        int srcIndex = y * tileWidth + x;
-                        int destIndex = ((row * tileHeight + y) * tileWidth * gridSize) + (col * tileWidth + x);
-                        compiledData[destIndex] = tile.pixelData[srcIndex];
-                    }
-                }
-            }
-        }
+        // Add valid moves (up, down, left, right)
+        if (emptyTileX > 0) validMoves.emplace_back(emptyTileX - 1, emptyTileY);
+        if (emptyTileX < gridSize - 1) validMoves.emplace_back(emptyTileX + 1, emptyTileY);
+        if (emptyTileY > 0) validMoves.emplace_back(emptyTileX, emptyTileY - 1);
+        if (emptyTileY < gridSize - 1) validMoves.emplace_back(emptyTileX, emptyTileY + 1);
 
-        // Adjust filename to include move number
-        std::string outputFile = filename.substr(0, filename.size() - 4) + "-" + std::to_string(moveNumber) + ".pgm";
-        PGMImageProcessor::writePGM(outputFile, compiledData, tileWidth * gridSize, tileHeight * gridSize);
-    }
+        // Shuffle the valid moves and choose one
+        std::shuffle(validMoves.begin(), validMoves.end(), engine);
+        auto [newX, newY] = validMoves.front();
 
-    void TileManager::makeMove(char direction)
-    {
-        int newX = emptyTileX, newY = emptyTileY;
-        switch (direction)
-        {
-        case 'L':
-            newX -= 1;
-            break;
-        case 'R':
-            newX += 1;
-            break;
-        case 'U':
-            newY -= 1;
-            break;
-        case 'D':
-            newY += 1;
-            break;
-        }
-        if (newX >= 0 && newX < gridSize && newY >= 0 && newY < gridSize)
-        {
-            swapTiles(emptyTileX, emptyTileY, newX, newY);
-            emptyTileX = newX;
-            emptyTileY = newY;
-        }
-    }
+        // Swap the empty tile with the chosen tile
+        swapTiles(emptyTileX, emptyTileY, newX, newY);
 
-    bool TileManager::isValidMove(char direction)
-    {
-        // Implement logic to check if a move is valid based on the direction and the current position of the empty tile
-        return true; // Placeholder
-    }
-
-    void TileManager::swapTiles(int x1, int y1, int x2, int y2)
-    {
-        std::swap(board[y1][x1], board[y2][x2]);
+        // Update empty tile position
+        emptyTileX = newX;
+        emptyTileY = newY;
     }
 }
+
+// Write the current tile arrangement to a PGM image
+void TileManager::writePGMImage(const std::string &filename, int moveNumber) {
+    int imageWidth = tileWidth * gridSize;
+    int imageHeight = tileHeight * gridSize;
+    std::vector<unsigned char> image(imageWidth * imageHeight, 255); // Initialize with white background
+
+    for (int row = 0; row < gridSize; ++row) {
+        for (int col = 0; col < gridSize; ++col) {
+            const Tile &tile = board[row][col];
+            for (int y = 0; y < tileHeight; ++y) {
+                for (int x = 0; x < tileWidth; ++x) {
+                    int imageIndex = (row * tileHeight + y) * imageWidth + (col * tileWidth + x);
+                    int tileIndex = y * tileWidth + x;
+                    image[imageIndex] = tile.pixelData[tileIndex];
+                }
+            }
+        }
+    }
+
+    // Construct the filename with the move number
+    std::string outputFilename = filename.substr(0, filename.find_last_of('.')) + "-" + std::to_string(moveNumber) + ".pgm";
+
+    // Write the image using PGMImageProcessor
+    if (!PGMImageProcessor::writePGM(outputFilename, image, imageWidth, imageHeight)) {
+        std::cerr << "Error writing PGM file: " << outputFilename << std::endl;
+    }
+}
+
+// Swap two tiles in the grid
+void TileManager::swapTiles(int x1, int y1, int x2, int y2) {
+    std::swap(board[y1][x1], board[y2][x2]);
+}
+
+} // namespace MSKMIC017
