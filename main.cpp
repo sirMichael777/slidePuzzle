@@ -7,12 +7,12 @@ using namespace MSKMIC017;
 
 int main(int argc, char* argv[]) {
     if (argc < 7) {
-        std::cerr << "Usage: " << argv[0] << " -s <size> -i <input.pgm> -n <moves> -x <output.pgm>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " -s <size> -i <input.pgm> -n <moves> -x <summary_output.pgm>" << std::endl;
         return 1;
     }
 
     std::string inputFilename;
-    std::string outputFilename;
+    std::string summaryOutputFilename;
     int gridSize = 0, numMoves = 0;
 
     // Parse command-line arguments
@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
         } else if (arg == "-n") {
             numMoves = std::stoi(argv[i + 1]);
         } else if (arg == "-x") {
-            outputFilename = argv[i + 1];
+            summaryOutputFilename = argv[i + 1];
         }
     }
 
@@ -36,17 +36,20 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    // Always use "output" as the base for individual moves
+    std::string baseOutputFilename = "output";
+
     // Save the initial state as output-0.pgm
-    tileManager.writePGMImage(outputFilename, 0);
+    tileManager.writePGMImage(baseOutputFilename, 0);
 
     // Shuffle and save the state after each move
     for (int move = 1; move <= numMoves; move++) {
         tileManager.shuffleTiles();
-        tileManager.writePGMImage(outputFilename, move); // Save after each move
+        tileManager.writePGMImage(baseOutputFilename, move); // Save as output-{move}.pgm
     }
 
-    // Generate and save the summary image
-    tileManager.generateSummaryImage(outputFilename, numMoves);
+    // Generate and save the summary image using the filename provided by the -x flag
+    tileManager.generateSummaryImage(summaryOutputFilename, numMoves);
 
     std::cout << "Shuffled puzzle states and summary image saved." << std::endl;
 

@@ -52,16 +52,19 @@ bool TileManager::loadPGMImage(const std::string &filename) {
     return true;
 }
 
-void TileManager::generateSummaryImage(const std::string &baseFilename, int numMoves) {
+void TileManager::generateSummaryImage(const std::string &summaryOutputFilename, int numMoves) {
+    int margin = 10; // Margin size between images and for the outer border
     int cols = std::ceil(std::sqrt(numMoves + 1));
     int rows = std::ceil(static_cast<float>(numMoves + 1) / cols);
-    int summaryWidth = cols * tileWidth * gridSize;
-    int summaryHeight = rows * tileHeight * gridSize;
-    std::vector<unsigned char> summaryImage(summaryWidth * summaryHeight, 255); // Initialize with white pixels
+
+    // Adjust the summary image dimensions to include the margins plus an extra margin on all sides for the border
+    int summaryWidth = cols * tileWidth * gridSize + (cols - 1) * margin + 2 * margin;
+    int summaryHeight = rows * tileHeight * gridSize + (rows - 1) * margin + 2 * margin;
+    std::vector<unsigned char> summaryImage(summaryWidth * summaryHeight, 255); // Initialize with white pixels for the border
 
     for (int move = 0; move <= numMoves; ++move) {
-        // Adjust filename pattern to match "output-{move}.pgm"
-        std::string filename = baseFilename.substr(0, baseFilename.find_last_of('.')) + "-" + std::to_string(move) +".pgm";
+        // Filename construction remains the same
+        std::string filename = "output-" + std::to_string(move) + ".pgm";
         std::vector<unsigned char> moveImageData;
         int width, height;
         if (!PGMImageProcessor::readPGM(filename, moveImageData, width, height)) {
@@ -71,17 +74,23 @@ void TileManager::generateSummaryImage(const std::string &baseFilename, int numM
 
         int moveRow = move / cols;
         int moveCol = move % cols;
+        // Start position now includes the border margin as well
+        int startX = margin + moveCol * (width + margin);
+        int startY = margin + moveRow * (height + margin);
+
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
-                int destIndex = ((moveRow * height + y) * summaryWidth) + (moveCol * width + x);
+                int destIndex = ((startY + y) * summaryWidth) + (startX + x);
                 summaryImage[destIndex] = moveImageData[y * width + x];
             }
         }
     }
 
-    std::string summaryFilename = baseFilename.substr(0, baseFilename.find_last_of('-')) + "-summary.pgm";
-    PGMImageProcessor::writePGM(summaryFilename, summaryImage, summaryWidth, summaryHeight);
+    // Write the summary image to file
+    PGMImageProcessor::writePGM(summaryOutputFilename, summaryImage, summaryWidth, summaryHeight);
 }
+
+
 
 
 // Shuffle tiles to create a solvable puzzle state
