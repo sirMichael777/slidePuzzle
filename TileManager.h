@@ -17,6 +17,7 @@ namespace MSKMIC017 {
         int emptyTileY;
         std::vector<std::vector<Tile>> board;
         void swapTiles(int x1, int y1, int x2, int y2);
+    
 
     public:
         TileManager(int size); // Constructor that only takes the size of the grid
@@ -24,7 +25,10 @@ namespace MSKMIC017 {
         bool loadPGMImage(const std::string &filename); // Load image and initialize tiles
         void shuffleTiles();
         void writePGMImage(const std::string &filename, int moveNumber);
+        void generateSummaryImage(const std::string &baseFilename, int numMoves);
     };
+
+        
 
 }
 

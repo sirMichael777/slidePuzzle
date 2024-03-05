@@ -1,11 +1,7 @@
 #include "TileManager.h"
 #include "PGMImageProcessor.h"
 #include <iostream>
-#include <vector>
 #include <string>
-#include <algorithm>
-#include <random>
-#include <chrono>
 
 using namespace MSKMIC017;
 
@@ -33,23 +29,26 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    TileManager tileManager(gridSize); 
+    TileManager tileManager(gridSize);
 
-    if (!tileManager.loadPGMImage(inputFilename)) { 
+    if (!tileManager.loadPGMImage(inputFilename)) {
         std::cerr << "Failed to load image: " << inputFilename << std::endl;
         return 1;
     }
 
-    // Save the initial state as image-0.pgm
+    // Save the initial state as output-0.pgm
     tileManager.writePGMImage(outputFilename, 0);
 
-    // Correctly applying one move at a time and saving the state after each move
+    // Shuffle and save the state after each move
     for (int move = 1; move <= numMoves; move++) {
-        tileManager.shuffleTiles(); // Adjusted to perform only one shuffle move per call
-        tileManager.writePGMImage(outputFilename, move); // Save after each single move
+        tileManager.shuffleTiles();
+        tileManager.writePGMImage(outputFilename, move); // Save after each move
     }
 
-    std::cout << "Shuffled puzzle states saved." << std::endl;
+    // Generate and save the summary image
+    tileManager.generateSummaryImage(outputFilename, numMoves);
+
+    std::cout << "Shuffled puzzle states and summary image saved." << std::endl;
 
     return 0;
 }

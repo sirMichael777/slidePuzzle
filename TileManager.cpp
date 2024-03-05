@@ -6,6 +6,7 @@
 #include <random>
 #include <chrono>
 #include <vector>
+#include <cmath> // For sqrt and ceil
 
 namespace MSKMIC017 {
 
@@ -49,6 +50,37 @@ bool TileManager::loadPGMImage(const std::string &filename) {
     std::fill(board[gridSize-1][gridSize-1].pixelData.begin(), board[gridSize-1][gridSize-1].pixelData.end(), 0);
 
     return true;
+}
+
+void TileManager::generateSummaryImage(const std::string &baseFilename, int numMoves) {
+    int cols = std::ceil(std::sqrt(numMoves + 1));
+    int rows = std::ceil(static_cast<float>(numMoves + 1) / cols);
+    int summaryWidth = cols * tileWidth * gridSize;
+    int summaryHeight = rows * tileHeight * gridSize;
+    std::vector<unsigned char> summaryImage(summaryWidth * summaryHeight, 255); // Initialize with white pixels
+
+    for (int move = 0; move <= numMoves; ++move) {
+        // Adjust filename pattern to match "output-{move}.pgm"
+        std::string filename = baseFilename.substr(0, baseFilename.find_last_of('.')) + "-" + std::to_string(move) +".pgm";
+        std::vector<unsigned char> moveImageData;
+        int width, height;
+        if (!PGMImageProcessor::readPGM(filename, moveImageData, width, height)) {
+            std::cerr << "Error reading image file: " << filename << std::endl;
+            continue; // Skip this file if there's an error
+        }
+
+        int moveRow = move / cols;
+        int moveCol = move % cols;
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                int destIndex = ((moveRow * height + y) * summaryWidth) + (moveCol * width + x);
+                summaryImage[destIndex] = moveImageData[y * width + x];
+            }
+        }
+    }
+
+    std::string summaryFilename = baseFilename.substr(0, baseFilename.find_last_of('-')) + "-summary.pgm";
+    PGMImageProcessor::writePGM(summaryFilename, summaryImage, summaryWidth, summaryHeight);
 }
 
 
