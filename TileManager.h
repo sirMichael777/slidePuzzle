@@ -22,7 +22,7 @@ namespace MSKMIC017 {
         TileManager(int size); // Constructor that only takes the size of the grid
         ~TileManager(); // Destructor to manage resources if necessary
         bool loadPGMImage(const std::string &filename); // Load image and initialize tiles
-        void shuffleTiles(int numMoves);
+        void shuffleTiles();
         void writePGMImage(const std::string &filename, int moveNumber);
     };
 

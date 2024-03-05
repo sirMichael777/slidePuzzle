@@ -22,8 +22,12 @@ $(TARGET): $(OBJS)
 clean:
 	rm -f $(OBJS) $(TARGET)
 
+# Clean .pgm files starting with 'output'
+clean-pgm:
+	find . -name 'output*.pgm' -exec rm {} +
+
 # Run the main program
-run: $(TARGET)
+run: clean-pgm $(TARGET)
 	./$(TARGET) $(ARGS)
 
-.PHONY: clean run
+.PHONY: clean run clean-pgm
