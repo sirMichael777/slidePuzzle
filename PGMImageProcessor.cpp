@@ -5,24 +5,25 @@
 
 namespace MSKMIC017
 {
+    // method to read and store the width, height and pixel info of a PGM image
     bool PGMImageProcessor::readPGM(const std::string &filename, std::vector<unsigned char> &data, int &width, int &height)
     {
-        std::ifstream file(filename, std::ios::binary);
+        std::ifstream file(filename, std::ios::binary); 
         if (!file)
         {
-            std::cerr << "Cannot open file: " << filename << std::endl;
+            std::cerr << "Cannot open file: " << filename <<", please make sure to check the spelling and verify if it's in the right location"<< std::endl;
             return false;
         }
 
         std::string line;
-        std::getline(file, line); // Read the magic number
+        std::getline(file, line); // Read the magic number and confirm it is P5
         if (line != "P5")
         {
-            std::cerr << "Unsupported file format (must be P5): " << filename << std::endl;
+            std::cerr << "Unsupported file format, only P5 is allowed: " << filename << std::endl;
             return false;
         }
 
-        // Skip any comment lines
+        // Skip comments
         while (file.peek() == '#')
         {
             std::getline(file, line);
@@ -35,11 +36,11 @@ namespace MSKMIC017
 
         if (maxVal > 255)
         {
-            std::cerr << "Unsupported max value (must be <= 255): " << filename << std::endl;
+            std::cerr << "Invalid max value {must be <= 255}: " << filename << std::endl;
             return false;
         }
 
-        data.resize(width * height);
+        data.resize(width * height);    //Make data size equal to that of  the image
         file.read(reinterpret_cast<char *>(&data[0]), data.size());
 
         if (!file)
@@ -68,7 +69,7 @@ namespace MSKMIC017
 
         if (!file.good())
         {
-            std::cerr << "Error occurred while writing to file: " << filename << std::endl;
+            std::cerr << "An error occurred while writing to file: " << filename << std::endl;
             return false;
         }
 

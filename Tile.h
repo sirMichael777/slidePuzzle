@@ -1,23 +1,37 @@
+// Tile.h
 #ifndef TILE_H
 #define TILE_H
 
-#include <vector>
+#include <cstddef> // For size_t
 
 namespace MSKMIC017 {
 
     class Tile {
     public:
-        std::vector<unsigned char> pixelData; // Stores the grayscale values
-        int width;                            // Width of the tile
-        int height;                           // Height of the tile
+        unsigned char* pixelData; // Pointer to the grayscale values array
+        int width;                // Width of the tile
+        int height;               // Height of the tile
+
+        // Default constructor
+        Tile() : width(0), height(0), pixelData(nullptr) {}
 
         // Constructor with width and height
         Tile(int w, int h);
 
-        // Default constructor - if needed based on your overall design
-        Tile() = default;
+        // Destructor
+        ~Tile();
 
-        // Add additional functions or member variables as needed
+        // Copy constructor
+        Tile(const Tile& other);
+
+        // Copy assignment operator
+        Tile& operator=(const Tile& other);
+
+        // Move constructor
+        Tile(Tile&& other) noexcept;
+
+        // Move assignment operator
+        Tile& operator=(Tile&& other) noexcept;
     };
 
 } // namespace MSKMIC017

@@ -6,7 +6,7 @@
 using namespace MSKMIC017;
 
 int main(int argc, char* argv[]) {
-    if (argc < 7) {
+    if (argc < 7) { //Verify if the number of cmd line args has been supplied
         std::cerr << "Usage: " << argv[0] << " -s <size> -i <input.pgm> -n <moves> -x <summary_output.pgm>" << std::endl;
         return 1;
     }
@@ -15,11 +15,11 @@ int main(int argc, char* argv[]) {
     std::string summaryOutputFilename;
     int gridSize = 0, numMoves = 0;
 
-    // Parse command-line arguments
+    // Parse cmd line args & set variables  accordingly
     for (int i = 1; i < argc; i += 2) {
         std::string arg(argv[i]);
         if (arg == "-s") {
-            gridSize = std::stoi(argv[i + 1]);
+            gridSize = std::stoi(argv[i + 1]);  //convert "string to integer"
         } else if (arg == "-i") {
             inputFilename = argv[i + 1];
         } else if (arg == "-n") {
@@ -29,29 +29,28 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    TileManager tileManager(gridSize);
+    TileManager tileManager(gridSize);  //TileManager obj with  given grid size
 
     if (!tileManager.loadPGMImage(inputFilename)) {
         std::cerr << "Failed to load image: " << inputFilename << std::endl;
         return 1;
     }
 
-    // Always use "output" as the base for individual moves
     std::string baseOutputFilename = "output";
-
-    // Save the initial state as output-0.pgm
+    
+    // Save initial image with the black tile at the bottom right corner
     tileManager.writePGMImage(baseOutputFilename, 0);
 
-    // Shuffle and save the state after each move
+    // Make a single valid move of the black tile and save the state
     for (int move = 1; move <= numMoves; move++) {
-        tileManager.shuffleTiles();
+        tileManager.makeRandomMove();
         tileManager.writePGMImage(baseOutputFilename, move); // Save as output-{move}.pgm
     }
 
-    // Generate and save the summary image using the filename provided by the -x flag
+    // Generate Summary image and  save it by the -x arg name
     tileManager.generateSummaryImage(summaryOutputFilename, numMoves);
 
-    std::cout << "Shuffled puzzle states and summary image saved." << std::endl;
+    std::cout << "Puzzle states and summary image saved." << std::endl;
 
     return 0;
 }
